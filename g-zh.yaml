@@ -1,0 +1,138 @@
+# Ngữ pháp tiếng Trung với chú thích tiếng Việt có dấu
+ngữ_pháp: &ngữ_pháp
+  - *trạng_ngữ       # 状语 - trạng ngữ
+  - *chủ_ngữ         # 主语 - chủ ngữ
+  - *vị_ngữ          # 谓语 - vị ngữ
+  - *tân_ngữ         # 宾语 - tân ngữ
+  - *trạng_ngữ       # 状语 - trạng ngữ
+
+chủ_ngữ: &chủ_ngữ
+  - *danh_từ           # 名词 - danh từ
+  - *đại_từ            # 代词 - đại từ
+  - *cụm_danh_từ       # 名词短语 - cụm danh từ
+  - *mệnh_đề_danh_ngữ  # 名词性从句 - mệnh đề danh ngữ
+
+vị_ngữ: &vị_ngữ
+  - *phó_từ_chỉ_thời_gian  # 副词_时间 - phó từ chỉ thời gian
+  - *động_từ_chính         # 动词 - động từ chính
+  - *bổ_ngữ                # 补语 - bổ ngữ
+  - *cụm_động_từ           # 动词短语 - cụm động từ
+  - *mệnh_đề_vị_ngữ        # 谓语从句 - mệnh đề vị ngữ
+
+tân_ngữ: &tân_ngữ
+  - *tân_ngữ_trực_tiếp     # 直接宾语 - tân ngữ trực tiếp
+  - *tân_ngữ_gián_tiếp     # 间接宾语 - tân ngữ gián tiếp
+  - *mệnh_đề_danh_ngữ      # 名词性从句 - mệnh đề danh ngữ
+
+trạng_ngữ: &trạng_ngữ
+  - *trạng_ngữ_thời_gian   # 状语_时间 - trạng ngữ thời gian
+  - *trạng_ngữ_nơi_chốn    # 状语_地点 - trạng ngữ nơi chốn
+  - *trạng_ngữ_cách_thức   # 状语_方式 - trạng ngữ cách thức
+  - *trạng_ngữ_lý_do       # 状语_原因 - trạng ngữ lý do
+  - *trạng_ngữ_mục_đích    # 状语_目的 - trạng ngữ mục đích
+  - *trạng_ngữ_điều_kiện   # 状语_条件 - trạng ngữ điều kiện
+  - *trạng_ngữ_so_sánh     # 状语_比较 - trạng ngữ so sánh
+  - *mệnh_đề_trạng_ngữ     # 状语从句 - mệnh đề trạng ngữ
+
+cụm_danh_từ: &cụm_danh_từ
+  - *số_từ                 # 数词 - số từ
+  - *lượng_từ              # 量词 - lượng từ
+  - *danh_từ_chính         # 中心名词 - danh từ chính
+  - *tính_từ_bổ_nghĩa      # 形容词修饰语 - tính từ bổ nghĩa
+  - *cụm_giới_từ           # 介词短语 - cụm giới từ
+  - *mệnh_đề_danh_ngữ      # 名词性从句 - mệnh đề danh ngữ
+  - *bổ_ngữ_danh_từ        # 名词补语 - bổ ngữ danh từ
+
+cụm_động_từ: &cụm_động_từ
+  - *động_từ_chính         # 动词 - động từ chính
+  - *bổ_ngữ_trạng_thái     # 补语_状态 - bổ ngữ trạng thái
+  - *bổ_ngữ_tính_chất      # 补语_性质 - bổ ngữ tính chất
+  - *cụm_giới_từ           # 介词短语 - cụm giới từ
+  - *mệnh_đề_trạng_ngữ     # 状语从句 - mệnh đề trạng ngữ
+  - câu_phụ_nội_tại        # 内部从句 - câu phụ nội tại
+  - *bổ_ngữ_mục_đích       # 补语_目的 - bổ ngữ mục đích
+
+bổ_ngữ: &bổ_ngữ
+  - *bổ_ngữ_trạng_thái    # 补语_状态 - bổ ngữ trạng thái
+  - *bổ_ngữ_tính_chất     # 补语_性质 - bổ ngữ tính chất
+  - *bổ_ngữ_tân_ngữ       # 补语_宾语 - bổ ngữ tân ngữ
+  - *bổ_ngữ_mục_đích      # 补语_目的 - bổ ngữ mục đích
+  - *cụm_giới_từ          # 介词短语 - cụm giới từ
+  - *mệnh_đề_trạng_ngữ    # 状语从句 - mệnh đề trạng ngữ
+
+cụm_giới_từ: &cụm_giới_từ
+  - *giới_từ             # 介词 - giới từ
+  - *cụm_danh_từ         # 名词短语 - cụm danh từ
+
+tân_ngữ_trực_tiếp: &tân_ngữ_trực_tiếp
+  - *cụm_danh_từ
+  - *mệnh_đề_danh_ngữ
+
+tân_ngữ_gián_tiếp: &tân_ngữ_gián_tiếp
+  - *cụm_danh_từ
+  - *cụm_giới_từ
+  - *mệnh_đề_danh_ngữ
+
+# Từ loại neo để tham chiếu
+danh_từ: &danh_từ
+  - danh_từ
+
+đại_từ: &đại_từ
+  - đại_từ
+
+động_từ_chính: &động_từ_chính
+  - động_từ_chính
+
+phó_từ_chỉ_thời_gian: &phó_từ_chỉ_thời_gian
+  - phó_từ_chỉ_thời_gian
+
+giới_từ: &giới_từ
+  - giới_từ
+
+trạng_ngữ_thời_gian: &trạng_ngữ_thời_gian
+  - trạng_ngữ_thời_gian
+
+trạng_ngữ_nơi_chốn: &trạng_ngữ_nơi_chốn
+  - trạng_ngữ_nơi_chốn
+
+trạng_ngữ_cách_thức: &trạng_ngữ_cách_thức
+  - trạng_ngữ_cách_thức
+
+trạng_ngữ_lý_do: &trạng_ngữ_lý_do
+  - trạng_ngữ_lý_do
+
+trạng_ngữ_mục_đích: &trạng_ngữ_mục_đích
+  - trạng_ngữ_mục_đích
+
+trạng_ngữ_điều_kiện: &trạng_ngữ_điều_kiện
+  - trạng_ngữ_điều_kiện
+
+trạng_ngữ_so_sánh: &trạng_ngữ_so_sánh
+  - trạng_ngữ_so_sánh
+
+số_từ: &số_từ
+  - số_từ
+
+lượng_từ: &lượng_từ
+  - lượng_từ
+
+danh_từ_chính: &danh_từ_chính
+  - danh_từ_chính
+
+tính_từ_bổ_nghĩa: &tính_từ_bổ_nghĩa
+  - tính_từ_bổ_nghĩa
+
+bổ_ngữ_trạng_thái: &bổ_ngữ_trạng_thái
+  - bổ_ngữ_trạng_thái
+
+bổ_ngữ_tính_chất: &bổ_ngữ_tính_chất
+  - bổ_ngữ_tính_chất
+
+bổ_ngữ_tân_ngữ: &bổ_ngữ_tân_ngữ
+  - bổ_ngữ_tân_ngữ
+
+bổ_ngữ_mục_đích: &bổ_ngữ_mục_đích
+  - bổ_ngữ_mục_đích
+
+bổ_ngữ_danh_từ: &bổ_ngữ_danh_từ
+  - bổ_ngữ_danh_từ

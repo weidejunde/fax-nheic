@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="author" content="viducquans" />
+  <meta name="last-modified" content="2025-05-16 16:10:30" />
+  <title>Mini Phiên Dịch</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      color: #202124;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .language-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .language-bar select {
+      font-size: 16px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #dadce0;
+      background: #fff;
+    }
+
+    .swap-btn {
+      padding: 6px 12px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      margin: 0 10px;
+    }
+
+    .translator-box {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .input-area, .output-area {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #dadce0;
+      resize: vertical;
+      background: #fff;
+    }
+
+    .output {
+      padding: 10px;
+      height: 150px;
+      background: #f1f3f4;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 16px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    .btn-group {
+      margin-top: 10px;
+    }
+
+    .btn-group button {
+      padding: 10px 16px;
+      font-size: 16px;
+      margin-right: 10px;
+      cursor: pointer;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .btn-group button:hover {
+      background: #1558d6;
+    }
+
+    .info-rule {
+      margin-top: 10px;
+      padding: 12px;
+      background: #e8f0fe;
+      border-left: 4px solid #1a73e8;
+      font-style: italic;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Máy phiên dịch thế hệ 100</h2>
+
+    <div class="language-bar">
+      <select id="sourceLanguage">
+        <option value="vi">Tiếng Việt</option>
+        <option value="en">Tiếng Anh</option>
+        <option value="zh">Tiếng Trung</option>
+        <option value="mji">Tiếng Dao (Kêmh Mŭnh)</option>
+      </select>
+
+      <button class="swap-btn" onclick="swapLanguages()">⇄</button>
+
+      <select id="targetLanguage">
+        <option value="en">Tiếng Anh</option>
+        <option value="vi">Tiếng Việt</option>
+        <option value="zh">Tiếng Trung</option>
+        <option value="mji">Tiếng Dao (Kêmh Mŭnh)</option>
+      </select>
+    </div>
+
+    <div class="translator-box">
+      <div class="input-area">
+        <textarea 
+          id="input" 
+          placeholder="Nhập văn bản..."
+          maxlength="500"
+        ></textarea>
+      </div>
+      <div class="output-area">
+        <div id="output" class="output">Kết quả sẽ hiển thị ở đây</div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button id="translateBtn">Dịch ngay</button>
+      <button id="clearBtn">Xóa</button>
+    </div>
+
+    <div id="infoRule" class="info-rule"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    function swapLanguages() {
+      const source = document.getElementById('sourceLanguage');
+      const target = document.getElementById('targetLanguage');
+      const temp = source.value;
+      source.value = target.value;
+      target.value = temp;
+    }
+  </script>
+  <script src="dictionary.js"></script>
+  <script src="grammar.js"></script>
+  <script src="translator.js"></script>
+</body>
+</html>

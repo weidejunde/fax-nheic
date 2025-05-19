@@ -1,0 +1,190 @@
+# Ngữ pháp tiếng Việt
+ngữ_pháp: &ngữ_pháp
+  - *trạng_ngữ
+  - *chủ_ngữ
+  - *vị_ngữ
+  - *tân_ngữ
+  - *trạng_ngữ
+
+# Cấu trúc chính
+chủ_ngữ: &chủ_ngữ
+  - *danh_từ
+  - *đại_từ
+  - *cụm_danh_từ
+  - *mệnh_đề
+
+vị_ngữ: &vị_ngữ
+  - *phó_từ
+  - *động_từ
+  - *bổ_ngữ
+  - *cụm_động_từ
+  - *mệnh_đề
+
+tân_ngữ: &tân_ngữ
+  - *tân_ngữ_trực_tiếp
+  - *tân_ngữ_gián_tiếp
+  - *mệnh_đề_danh_ngữ
+
+trạng_ngữ: &trạng_ngữ
+  - *trạng_ngữ_thời_gian
+  - *trạng_ngữ_nơi_chốn
+  - *trạng_ngữ_cách_thức
+  - *trạng_ngữ_lý_do
+  - *trạng_ngữ_mục_đích
+  - *trạng_ngữ_điều_kiện
+  - *trạng_ngữ_so_sánh
+  - *mệnh_đề_trạng_ngữ
+
+# Cụm danh từ
+cụm_danh_từ: &cụm_danh_từ
+  - *số_từ
+  - *lượng_từ
+  - *danh_từ
+  - *tính_từ
+  - *cụm_giới_từ
+  - *mệnh_đề
+  - *bổ_ngữ
+
+# Cụm động từ
+cụm_động_từ: &cụm_động_từ
+  - *động_từ_chính
+  - *bổ_ngữ_trạng_thái
+  - *bổ_ngữ_tính_chất
+  - *cụm_giới_từ
+  - *mệnh_đề_trạng_ngữ
+  - *câu_phụ_nội_tại
+  - *bổ_ngữ_mục_đích
+
+# Bổ ngữ
+bổ_ngữ: &bổ_ngữ
+  - *bổ_ngữ_trạng_thái
+  - *bổ_ngữ_tính_chất
+  - *bổ_ngữ_tân_ngữ
+  - *bổ_ngữ_mục_đích
+  - *cụm_giới_từ
+  - *mệnh_đề_trạng_ngữ
+
+bổ_ngữ_tân_ngữ: &bổ_ngữ_tân_ngữ
+  - *tân_ngữ_trực_tiếp
+  - *tân_ngữ_gián_tiếp
+
+# Cụm giới từ
+cụm_giới_từ: &cụm_giới_từ
+  - *giới_từ
+  - *cụm_danh_từ
+
+# Tân ngữ
+tân_ngữ_trực_tiếp: &tân_ngữ_trực_tiếp
+  - *cụm_danh_từ
+  - *mệnh_đề_danh_ngữ
+
+tân_ngữ_gián_tiếp: &tân_ngữ_gián_tiếp
+  - *cụm_danh_từ
+  - *cụm_giới_từ
+  - *mệnh_đề_danh_ngữ
+
+# Mệnh đề
+mệnh_đề: &mệnh_đề
+  - *chủ_ngữ
+  - *vị_ngữ
+
+mệnh_đề_danh_ngữ: &mệnh_đề_danh_ngữ
+  - rằng + *mệnh_đề
+  - việc + *động_từ
+
+mệnh_đề_trạng_ngữ: &mệnh_đề_trạng_ngữ
+  - nếu + *mệnh_đề
+  - khi + *mệnh_đề
+  - vì + *mệnh_đề
+  - để + *mệnh_đề
+
+câu_phụ_nội_tại: &câu_phụ_nội_tại
+  - *mệnh_đề_danh_ngữ
+  - *mệnh_đề_trạng_ngữ
+
+# Từ loại cơ bản
+danh_từ: &danh_từ
+  - danh_từ
+
+đại_từ: &đại_từ
+  - đại_từ
+
+động_từ: &động_từ
+  - động_từ
+
+phó_từ: &phó_từ
+  - phó_từ
+
+giới_từ: &giới_từ
+  - giới_từ
+
+số_từ: &số_từ
+  - số_từ
+
+lượng_từ: &lượng_từ
+  - lượng_từ
+
+tính_từ: &tính_từ
+  - tính_từ
+
+# Các trạng ngữ chuyên biệt
+trạng_ngữ_thời_gian: &trạng_ngữ_thời_gian
+  - vào buổi sáng
+  - hôm qua
+  - lúc đó
+
+trạng_ngữ_nơi_chốn: &trạng_ngữ_nơi_chốn
+  - ở trường
+  - trong nhà
+
+trạng_ngữ_cách_thức: &trạng_ngữ_cách_thức
+  - một cách cẩn thận
+  - bằng tay
+
+trạng_ngữ_lý_do: &trạng_ngữ_lý_do
+  - vì trời mưa
+  - do lỗi hệ thống
+
+trạng_ngữ_mục_đích: &trạng_ngữ_mục_đích
+  - để học tốt
+  - nhằm đạt điểm cao
+
+trạng_ngữ_điều_kiện: &trạng_ngữ_điều_kiện
+  - nếu trời đẹp
+  - nếu bạn rảnh
+
+trạng_ngữ_so_sánh: &trạng_ngữ_so_sánh
+  - như cha mình
+  - giống hệt hôm qua
+
+# Động từ chính (dùng riêng để phân biệt)
+động_từ_chính: &động_từ_chính
+  - chạy
+  - ăn
+  - học
+  - ngủ
+
+# Bổ ngữ chi tiết
+bổ_ngữ_trạng_thái: &bổ_ngữ_trạng_thái
+  - rất nhanh
+  - chậm chạp
+
+bổ_ngữ_tính_chất: &bổ_ngữ_tính_chất
+  - thông minh
+  - lười biếng
+
+bổ_ngữ_mục_đích: &bổ_ngữ_mục_đích
+  - để đạt kết quả tốt
+  - nhằm tiết kiệm thời gian
+
+# Ví dụ thực tế
+ví_dụ:
+  - câu: "Hôm qua tôi đã ăn cơm ở nhà."
+    phân_tích:
+      trạng_ngữ: "Hôm qua"
+      chủ_ngữ: "tôi"
+      vị_ngữ:
+        phó_từ: "đã"
+        động_từ_chính: "ăn"
+        tân_ngữ: "cơm"
+        trạng_ngữ_nơi_chốn: "ở nhà"

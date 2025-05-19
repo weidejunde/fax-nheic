@@ -1,0 +1,139 @@
+{
+  "ngữ_pháp": [
+    "trạng_ngữ",
+    "chủ_ngữ",
+    "vị_ngữ",
+    "tân_ngữ",
+    "trạng_ngữ"
+  ],
+  "chủ_ngữ": [
+    "danh_từ",
+    "đại_từ",
+    "cụm_danh_từ",
+    "mệnh_đề_danh_ngữ"
+  ],
+  "vị_ngữ": [
+    "phó_từ_chỉ_thời_gian",
+    "động_từ_chính",
+    "bổ_ngữ",
+    "cụm_động_từ",
+    "mệnh_đề_vị_ngữ"
+  ],
+  "tân_ngữ": [
+    "tân_ngữ_trực_tiếp",
+    "tân_ngữ_gián_tiếp",
+    "mệnh_đề_danh_ngữ"
+  ],
+  "trạng_ngữ": [
+    "trạng_ngữ_thời_gian",
+    "trạng_ngữ_nơi_chốn",
+    "trạng_ngữ_cách_thức",
+    "trạng_ngữ_lý_do",
+    "trạng_ngữ_mục_đích",
+    "trạng_ngữ_điều_kiện",
+    "trạng_ngữ_so_sánh",
+    "mệnh_đề_trạng_ngữ"
+  ],
+  "cụm_danh_từ": [
+    "số_từ",
+    "lượng_từ",
+    "danh_từ_chính",
+    "tính_từ_bổ_nghĩa",
+    "cụm_giới_từ",
+    "mệnh_đề_danh_ngữ",
+    "bổ_ngữ_danh_từ"
+  ],
+  "cụm_động_từ": [
+    "động_từ_chính",
+    "bổ_ngữ_trạng_thái",
+    "bổ_ngữ_tính_chất",
+    "cụm_giới_từ",
+    "mệnh_đề_trạng_ngữ",
+    "câu_phụ_nội_tại",
+    "bổ_ngữ_mục_đích"
+  ],
+  "bổ_ngữ": [
+    "bổ_ngữ_trạng_thái",
+    "bổ_ngữ_tính_chất",
+    "bổ_ngữ_tân_ngữ",
+    "bổ_ngữ_mục_đích",
+    "cụm_giới_từ",
+    "mệnh_đề_trạng_ngữ"
+  ],
+  "cụm_giới_từ": [
+    "giới_từ",
+    "cụm_danh_từ"
+  ],
+  "tân_ngữ_trực_tiếp": [
+    "cụm_danh_từ",
+    "mệnh_đề_danh_ngữ"
+  ],
+  "tân_ngữ_gián_tiếp": [
+    "cụm_danh_từ",
+    "cụm_giới_từ",
+    "mệnh_đề_danh_ngữ"
+  ],
+  "danh_từ": [
+    "danh_từ"
+  ],
+  "đại_từ": [
+    "đại_từ"
+  ],
+  "động_từ_chính": [
+    "động_từ_chính"
+  ],
+  "phó_từ_chỉ_thời_gian": [
+    "phó_từ_chỉ_thời_gian"
+  ],
+  "giới_từ": [
+    "giới_từ"
+  ],
+  "trạng_ngữ_thời_gian": [
+    "trạng_ngữ_thời_gian"
+  ],
+  "trạng_ngữ_nơi_chốn": [
+    "trạng_ngữ_nơi_chốn"
+  ],
+  "trạng_ngữ_cách_thức": [
+    "trạng_ngữ_cách_thức"
+  ],
+  "trạng_ngữ_lý_do": [
+    "trạng_ngữ_lý_do"
+  ],
+  "trạng_ngữ_mục_đích": [
+    "trạng_ngữ_mục_đích"
+  ],
+  "trạng_ngữ_điều_kiện": [
+    "trạng_ngữ_điều_kiện"
+  ],
+  "trạng_ngữ_so_sánh": [
+    "trạng_ngữ_so_sánh"
+  ],
+  "số_từ": [
+    "số_từ"
+  ],
+  "lượng_từ": [
+    "lượng_từ"
+  ],
+  "danh_từ_chính": [
+    "danh_từ_chính"
+  ],
+  "tính_từ_bổ_nghĩa": [
+    "tính_từ_bổ_nghĩa"
+  ],
+  "bổ_ngữ_trạng_thái": [
+    "bổ_ngữ_trạng_thái"
+  ],
+  "bổ_ngữ_tính_chất": [
+    "bổ_ngữ_tính_chất"
+  ],
+  "bổ_ngữ_tân_ngữ": [
+    "bổ_ngữ_tân_ngữ"
+  ],
+  "bổ_ngữ_mục_đích": [
+    "bổ_ngữ_mục_đích"
+  ],
+  "bổ_ngữ_danh_từ": [
+    "bổ_ngữ_danh_từ"
+  ]
+}
