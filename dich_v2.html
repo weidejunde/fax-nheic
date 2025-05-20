@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Dịch Offline (Cụm danh từ có thứ tự adj đánh số, dịch mọi tổ hợp)</title>
+<style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; }
+    .container {
+        background: #fff;
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 24px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; color: #1976d2; }
+    .controls { display: flex; gap: 10px; margin-bottom: 14px; }
+    select { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+    .swap-btn {
+        background: #edf2fb; border: none; border-radius: 50%; width: 36px; height: 36px;
+        cursor: pointer; font-size: 18px; margin-top: 2px;
+    }
+    textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 12px; min-height: 80px;}
+    .main-result { background: #e3f2fd; font-weight: bold; padding: 6px 6px; border-radius: 4px; margin-bottom: 8px; }
+    .subs { color: #555; margin-top: 10px; }
+    .choose-btn { cursor:pointer; color: #1976d2; text-decoration: underline; background: none; border: none; padding: 0 3px;}
+    .choose-btn:focus { outline: 1px dashed #1976d2; }
+    .reverse-btn { margin-left: 12px; font-size: 13px; color: #555; cursor:pointer; text-decoration: underline; background: none; border: none;}
+    .grammar-info {
+        background: #e0e0e0;
+        color: #222;
+        font-size: 13px;
+        margin-bottom: 10px;
+        padding: 6px 10px 6px 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Dịch Offline (Cụm danh từ đánh số, dịch mọi tổ hợp)</h2>
+    <div class="controls">
+        <select id="fromLang">
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">Tiếng Anh</option>
+            <option value="zh">Tiếng Trung</option>
+        </select>
+        <button class="swap-btn" id="swapBtn" title="Đổi chiều">⇄</button>
+        <select id="toLang">
+            <option value="en">Tiếng Anh</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="zh">Tiếng Trung</option>
+        </select>
+    </div>
+    <textarea id="inputText" placeholder="Nhập văn bản..."></textarea>
+    <div id="grammarInfo" class="grammar-info" style="display:none"></div>
+    <div id="outputText" style="white-space:pre-line;background:#f8f9fa;min-height:80px;padding:10px;border-radius:5px;border:1px solid #ccc;margin-bottom:12px;"></div>
+    <div style="font-size:13px;color:#888;text-align:center;margin-top:12px;">
+        <b>Lưu ý:</b> Nếu dịch chưa hoàn chỉnh sẽ hiện màu đỏ. Nếu có nhiều nghĩa sẽ hiện nhiều câu, bạn có thể chọn câu chính để đảo ngược dịch.
+    </div>
+</div>
+<script>
+const langsNoSpace = ["zh"];
+const dictionary = [
+    { id: "i", pos: "pronoun", class: "personal", vi: "tôi", en: "I", zh: "我" },
+    { id: "you", pos: "pronoun", class: "personal", vi: "bạn", en: "you", zh: "你" },
+    { id: "love", pos: "verb", class: "action", vi: "yêu", en: "love", zh: "爱" },
+    { id: "the", pos: "article", class: "article", vi: "con", en: "the", zh: "" },
+    { id: "cat", pos: "noun", class: "animal", vi: "mèo", en: "cat", zh: "猫" },
+    { id: "dog", pos: "noun", class: "animal", vi: ["chó", "cún"], en: ["dog", "puppy"], zh: "狗" },
+    { id: "book", pos: "noun", class: "object", vi: "sách", en: "book", zh: "书" },
+    { id: "fat", pos: "adj", class: "shape", vi: "béo", en: "fat", zh: "胖" },
+    { id: "blue", pos: "adj", class: "color", vi: "xanh", en: "blue", zh: "蓝色" },
+    { id: "green", pos: "adj", class: "color", vi: "xanh", en: "green", zh: "绿色" },
+    { id: "color", pos: "adj", class: "color", vi: "màu", en: "", zh: "" },
+    { id: "hello", pos: "interj", class: "greeting", vi: "xin chào", en: "hello", zh: "你好" }
+];
+
+const grammars = [ 
+    {
+        id: "cum_danh_tu_nhieu_adj",
+        vi: ["noun", "adj1", "adj2"],
+        en: ["adj2", "adj1", "noun"],
+        zh: ["adj2", "adj1", "noun"]
+    },
+    {
+        id: "cum_danh_tu_noun_adj",
+        vi: ["noun", "adj1"],
+        en: ["adj1", "noun"],
+        zh: ["adj1", "noun"] // 美丽的 花
+    },
+    {
+        id: "cum_tinh_tu",
+        vi: ["adj2", "adj1"],
+        en: ["adj1", "adj2"],
+        zh: ["adj1", "adj2"]
+    },
+    {
+        id: "cum_danh_tu_noun",
+        vi: ["noun","cum_tinh_tu"],
+        en: ["cum_tinh_tu","noun"],
+        zh: ["cum_tinh_tu","noun"]
+    },
+    {
+        id: "cum_danh_tu_adj_noun",
+        vi: ["adj1", "noun"],
+        en: ["adj1", "noun"],
+        zh: ["adj1", "noun"]
+    },
+    {
+        id: "cau_don_full_adj",
+        vi: ["pronoun", "verb", "article", "noun", "adj1", "adj2", "adj3"],
+        en: ["pronoun", "verb", "article", "adj1", "adj2", "adj3", "noun"],
+        zh: ["pronoun", "verb", "adj1", "adj2", "adj3", "noun"]
+    },
+    {
+        id: "cau_don_article_noun_adj",
+        vi: ["pronoun", "verb", "article", "noun", "adj1"],
+        en: ["pronoun", "verb", "article", "adj1", "noun"],
+        zh: ["pronoun", "verb", "adj1", "noun"]
+    },
+    {
+        id: "cau_don_noun_adj",
+        vi: ["pronoun", "verb", "noun", "adj1"],
+        en: ["pronoun", "verb", "adj1", "noun"],
+        zh: ["pronoun", "verb", "adj1", "noun"]
+    },
+    {
+        id: "cau_don_article_noun",
+        vi: ["pronoun", "verb", "article", "noun"],
+        en: ["pronoun", "verb", "article", "noun"],
+        zh: ["pronoun", "verb", "noun"]
+    },
+    {
+        id: "cau_don_noun",
+        vi: ["pronoun", "verb", "noun"],
+        en: ["pronoun", "verb", "noun"],
+        zh: ["pronoun", "verb", "noun"]
+    }
+];
+
+function tokenize(text, lang) {
+    if (langsNoSpace.includes(lang)) {
+        let tokens = [];
+        let s = text.replace(/\s+/g, "");
+        let i = 0;
+        while (i < s.length) {
+            let found = "";
+            for (let len = Math.min(4, s.length - i); len > 0; len--) {
+                let sub = s.substr(i, len);
+                let dictEntry = dictionary.find(w => w[lang] && w[lang] === sub);
+                if (dictEntry) {
+                    found = sub;
+                    break;
+                }
+            }
+            if (found) {
+                tokens.push(found);
+                i += found.length;
+            } else {
+                tokens.push(s[i]);
+                i++;
+            }
+        }
+        return tokens;
+    }
+    return text.trim().toLowerCase().split(/\s+/);
+}
+
+function findDictEntries(word, lang) {
+    let result = [];
+    for (let w of dictionary) {
+        if (!w[lang]) continue;
+        if (Array.isArray(w[lang])) {
+            for (let v of w[lang]) {
+                if (v.toLowerCase() === word.toLowerCase()) {
+                    let o = {};
+                    for (let k in w) o[k] = (k === lang ? v : w[k]);
+                    result.push(o);
+                }
+            }
+        } else {
+            if (w[lang].toLowerCase() === word.toLowerCase()) {
+                let o = {};
+                for (let k in w) o[k] = w[k];
+                result.push(o);
+            }
+        }
+    }
+    return result;
+}
+
+function analyzeTokensAll(tokens, lang, toLang) {
+    return tokens.map(tok => {
+        const entries = findDictEntries(tok, lang);
+        if (entries.length)
+            return entries;
+        return [{ id: null, pos: null, [lang]: tok, [toLang]: `<span style='color:#c62828'>${tok}</span>` }];
+    });
+}
+
+function getBestPattern(tokens, lang) {
+    let best = null, bestScore = -1, bestId = null;
+    for (const g of grammars) {
+        let pattern = g[lang];
+        if (pattern.length !== tokens.length) continue;
+        let score = 0;
+        for (let i = 0; i < pattern.length; ++i) {
+            let pat = pattern[i];
+            let pos = tokens[i][0].pos;
+            let patBase = pat.replace(/\d+$/, "");
+            if (pos === patBase) score++;
+        }
+        if (score > bestScore) {
+            bestScore = score;
+            best = g;
+            bestId = g.id;
+        }
+    }
+    return best || {vi: tokens.map((arr,i)=>arr[0].pos), en: tokens.map((arr,i)=>arr[0].pos), id: null};
+}
+
+function cartesianProduct(arrays) {
+    return arrays.reduce((a, b) => a.flatMap(d => b.map(e => d.concat([e]))), [[]]);
+}
+
+function partialTranslateAll(input, fromLang, toLang) {
+    const tokens = tokenize(input, fromLang);
+    if (tokens.length === 0) return {sentences: [], full: true, grammar: null};
+    const analyzed = analyzeTokensAll(tokens, fromLang, toLang);
+
+    const bestPat = getBestPattern(analyzed, fromLang);
+    const fromPat = bestPat[fromLang];
+    const toPat = bestPat[toLang];
+    const grammarId = bestPat.id;
+
+    let label2idx = {};
+    let counter = {};
+    for (let i = 0; i < fromPat.length; ++i) {
+        let pat = fromPat[i];
+        let base = pat.replace(/\d+$/, "");
+        counter[base] = (counter[base] || 0) + 1;
+        let label = base + counter[base];
+        label2idx[label] = i;
+        if (!/\d+$/.test(pat)) {
+            label2idx[base] = i;
+        }
+    }
+
+    const combos = cartesianProduct(analyzed);
+    let joinChar = langsNoSpace.includes(toLang) ? "" : " ";
+
+    const allSentences = combos.map(words => {
+        return toPat.map(label => {
+            let idx = label2idx[label];
+            return (idx !== undefined && words[idx]) ? words[idx][toLang] : "";
+        }).join(joinChar);
+    });
+
+    return {
+        sentences: Array.from(new Set(allSentences)),
+        full: true,
+        grammar: bestPat
+    };
+}
+
+// UI & xử lý
+let mainResultIdx = 0;
+let lastSentences = [];
+let lastInput = "";
+let lastFrom = "";
+let lastTo = "";
+let lastGrammar = null;
+
+function grammarPatternToString(patArr) {
+    if (!patArr) return '';
+    return patArr.map(x => `<span style="font-family:monospace">${x}</span>`).join(' – ');
+}
+
+function updateOutput(mainIdx) {
+    const from = fromLang.value;
+    const to = toLang.value;
+    const text = inputText.value.trim();
+    if (!text) {
+        outputText.innerHTML = '';
+        outputText.style.color = '';
+        grammarInfo.style.display = "none";
+        return;
+    }
+    if (text !== lastInput || from !== lastFrom || to !== lastTo) mainResultIdx = 0;
+    lastInput = text;
+    lastFrom = from;
+    lastTo = to;
+    const result = partialTranslateAll(text, from, to);
+    lastSentences = result.sentences;
+    lastGrammar = result.grammar;
+    // Hiển thị thông tin ngữ pháp
+    if (lastGrammar && lastGrammar.id) {
+        grammarInfo.innerHTML = `Ngữ pháp đang sử dụng: <b>${lastGrammar.id}</b><br>
+            <span style="color:#1976d2">(${fromLang.options[fromLang.selectedIndex].text}):</span> ${grammarPatternToString(lastGrammar[from])}<br>
+            <span style="color:#1976d2">(${toLang.options[toLang.selectedIndex].text}):</span> ${grammarPatternToString(lastGrammar[to])}`;
+        grammarInfo.style.display = "";
+    } else {
+        grammarInfo.innerHTML = "";
+        grammarInfo.style.display = "none";
+    }
+    if (!result.sentences.length) {
+        outputText.innerHTML = '<span style="color:#c62828">[Không có kết quả]</span>';
+        return;
+    }
+    if (mainResultIdx < 0 || mainResultIdx >= result.sentences.length) mainResultIdx = 0;
+    let html = '';
+    result.sentences.forEach((s, idx) => {
+        if (idx === mainResultIdx) {
+            html += `<div style="background:#bbdefb; padding:6px; border-radius:4px; margin-bottom:6px;">
+                <b>${s}</b> 
+                <button class="reverse-btn" onclick="chooseMainResult(${idx});reverseTranslate();">Đảo ngược dịch</button>
+            </div>`;
+        } else {
+            html += `<div style="color:#555; padding:4px; margin-bottom:4px; cursor:pointer;" onclick="chooseMainResult(${idx});">${s}</div>`;
+        }
+    });
+    outputText.innerHTML = html;
+    outputText.style.color = result.full ? "" : "#c62828";
+}
+
+function doTranslate() { updateOutput(mainResultIdx); }
+window.chooseMainResult = function(idx) {
+    mainResultIdx = idx;
+    updateOutput(idx);
+};
+window.reverseTranslate = function() {
+    const from = fromLang.value;
+    const to = toLang.value;
+    const mainText = lastSentences[mainResultIdx];
+    fromLang.value = to;
+    toLang.value = from;
+    inputText.value = mainText;
+    mainResultIdx = 0;
+    doTranslate();
+};
+const fromLang = document.getElementById('fromLang');
+const toLang = document.getElementById('toLang');
+const inputText = document.getElementById('inputText');
+const outputText = document.getElementById('outputText');
+const swapBtn = document.getElementById('swapBtn');
+const grammarInfo = document.getElementById('grammarInfo');
+swapBtn.addEventListener('click', () => {
+    const temp = fromLang.value;
+    fromLang.value = toLang.value;
+    toLang.value = temp;
+    inputText.value = outputText.innerText.trim();
+    mainResultIdx = 0;
+    doTranslate();
+});
+
+inputText.addEventListener('input', function() { mainResultIdx = 0; doTranslate(); });
+fromLang.addEventListener('change', function() { mainResultIdx = 0; doTranslate(); });
+toLang.addEventListener('change', function() { mainResultIdx = 0; doTranslate(); });
+doTranslate();
+</script>
+</body>
+</html>

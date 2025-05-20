@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Dịch Offline (Cụm danh từ có thứ tự adj đánh số, dịch mọi tổ hợp)</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: Arial, sans-serif;
+        background: #f1f3f4;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 960px;
+        margin: auto;
+        background: none;
+        padding: 0;
+    }
+    h2 {
+        text-align: center;
+        color: #202124;
+        margin-bottom: 20px;
+    }
+    .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+        justify-content: center;
+    }
+    select {
+        padding: 8px;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        background: #fff;
+        font-size: 14px;
+    }
+    .swap-btn {
+        background: #fff;
+        border: 1px solid #dadce0;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .panels {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .panel {
+        flex: 1;
+        min-width: 300px;
+        background: #fff;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+    textarea, .output-box {
+        width: 100%;
+        min-height: 120px;
+        border: none;
+        resize: vertical;
+        font-size: 16px;
+        line-height: 1.5;
+        background: none;
+        outline: none;
+    }
+    .output-box {
+        white-space: pre-line;
+        color: #202124;
+    }
+    .grammar-info {
+        font-size: 13px;
+        margin-top: 10px;
+        color: #5f6368;
+        text-align: center;
+    }
+    .note {
+        font-size: 13px;
+        color: #5f6368;
+        text-align: center;
+        margin-top: 16px;
+    }
+</style>
+
+</head>
+<div class="controls">
+    <select id="fromLang">
+        <option value="vi">Tiếng Việt</option>
+        <option value="en">Tiếng Anh</option>
+        <option value="zh">Tiếng Trung</option>
+    </select>
+    <button class="swap-btn" id="swapBtn" title="Đổi chiều">⇄</button>
+    <select id="toLang">
+        <option value="en">Tiếng Anh</option>
+        <option value="vi">Tiếng Việt</option>
+        <option value="zh">Tiếng Trung</option>
+    </select>
+</div>
+
+<div class="panels">
+    <div class="panel">
+        <textarea id="inputText" placeholder="Nhập văn bản..."></textarea>
+    </div>
+    <div class="panel">
+        <div id="outputText" class="output-box"></div>
+    </div>
+</div>
+
+<div id="grammarInfo" class="grammar-info" style="display:none"></div>
+
+<div class="note">
+    <b>Lưu ý:</b> Nếu dịch chưa hoàn chỉnh sẽ hiện màu đỏ. Nếu có nhiều nghĩa sẽ hiện nhiều câu, bạn có thể chọn câu chính để đảo ngược dịch.
+</div>
+
+<script>
+const langsNoSpace = ["zh"];
+const dictionary = [
+    { 
+        id: "my", 
+        pos: "pronoun_possessive", 
+        class: "personal", 
+        vi: ["của tôi"], // Map "của tôi" sang "my"
+        en: "my",
+        zh: "我的" 
+    },
+    { 
+        id: "your", 
+        pos: "pronoun_possessive", 
+        class: "personal", 
+        vi: "của bạn",
+        en: "your",
+        zh: "你的"
+    },
+    { id: "i", pos: "pronoun", class: "personal", vi: "tôi", en: "I", zh: "我" },
+    { id: "you", pos: "pronoun", class: "personal", vi: "bạn", en: "you", zh: "你" },
+    { id: "love", pos: "verb", class: "action", vi: ["yêu","mến"], en: ["love","like"], zh: "爱" },
+    { id: "the", pos: "article", class: "article", vi: "con", en: "the", zh: "" },
+    { id: "cat", pos: "noun", class: "animal", vi: "mèo", en: "cat", zh: "猫" },
+    { id: "dog", pos: "noun", class: "animal", vi: ["chó", "cún"], en: ["dog", "puppy"], zh: "狗" },
+    { id: "book", pos: "noun", class: "object", vi: "sách", en: "book", zh: "书" },
+    { id: "fat", pos: "adj", class: "shape", vi: "béo", en: "fat", zh: "胖" },
+    { id: "blue", pos: "adj", class: "color", vi: "xanh dương", en: "blue", zh: "蓝色" },
+    { id: "green", pos: "adj", class: "color", vi: "xanh lá", en: "green", zh: "绿色" },
+    { id: "color", pos: "adj", class: "color", vi: "màu", en: "", zh: "" },
+    { id: "hello", pos: "interj", class: "greeting", vi: "xin chào", en: "hello", zh: "你好" },
+    { id: "of", pos: "prep", class: "possessive", vi: "của", en: "of", zh: "的" }
+
+];
+
+const grammars = [ 
+    {
+        id: "cum_so_huu_en",
+        vi: ["noun", "pronoun_possessive"], // "mèo của tôi" -> ["mèo", "của tôi"]
+        en: ["pronoun_possessive", "noun"], // -> ["my", "cat"]
+        zh: ["pronoun_possessive", "noun"]
+    },
+    {
+    id: "cum_so_huu_nhieu_adj",
+    vi: ["noun", "prep", "pronoun", "adj1", "adj2"],
+    en: ["pronoun", "prep", "adj1", "adj2", "noun"],
+    zh: ["pronoun", "prep", "adj1", "adj2", "noun"]
+},
+    {
+    id: "cum_so_huu_adj",
+    vi: ["noun", "prep", "pronoun", "adj1"],
+    en: ["pronoun", "prep", "adj1", "noun"], // không dùng cho en nhưng để đồng bộ
+    zh: ["pronoun", "prep", "adj1", "noun"] // hoặc ["pronoun", "adj1", "noun"]
+},
+    {
+    id: "cum_so_huu",
+    vi: ["noun", "prep", "pronoun"],
+    en: ["pronoun", "prep", "noun"], // không dùng cho en nhưng để đồng bộ
+    zh: ["pronoun", "prep", "noun"] // hoặc ["pronoun", "adj1", "noun"]
+},
+    {
+    id: "cum_so_huu",
+    vi: ["article", "noun", "prep", "pronoun"],
+    en: ["article", "noun", "prep", "pronoun"],
+    zh: ["pronoun", "prep", "noun"]
+},
+    {
+        id: "cum_danh_tu_nhieu_adj",
+        vi: ["noun", "adj1", "adj2"],
+        en: ["adj2", "adj1", "noun"],
+        zh: ["adj2", "adj1", "noun"]
+    },
+    {
+        id: "cum_danh_tu_noun_adj",
+        vi: ["noun", "verb"],
+        en: ["noun", "verb"],
+        zh: ["noun", "verb"], // 美丽的 花
+    },
+    {
+        id: "cum_tinh_tu",
+        vi: ["adj2", "adj1"],
+        en: ["adj1", "adj2"],
+        zh: ["adj1", "adj2"]
+    },
+    {
+        id: "cum_danh_tu_noun",
+        vi: ["noun","cum_tinh_tu"],
+        en: ["cum_tinh_tu","noun"],
+        zh: ["cum_tinh_tu","noun"]
+    },
+    {
+        id: "cum_danh_tu_adj_noun",
+        vi: ["adj1", "noun"],
+        en: ["adj1", "noun"],
+        zh: ["adj1", "noun"]
+    },
+    {
+        id: "cau_don_full_adj",
+        vi: ["pronoun", "verb", "article", "noun", "adj1", "adj2", "adj3"],
+        en: ["pronoun", "verb", "article", "adj1", "adj2", "adj3", "noun"],
+        zh: ["pronoun", "verb", "adj1", "adj2", "adj3", "noun"]
+    },
+    {
+        id: "cau_don_article_noun_adj",
+        vi: ["pronoun", "verb", "article", "noun", "adj1"],
+        en: ["pronoun", "verb", "article", "adj1", "noun"],
+        zh: ["pronoun", "verb", "adj1", "noun"]
+    },
+    {
+        id: "cau_don_noun_adj",
+        vi: ["pronoun", "verb", "noun", "adj1"],
+        en: ["pronoun", "verb", "adj1", "noun"],
+        zh: ["pronoun", "verb", "adj1", "noun"]
+    },
+    {
+        id: "cau_don_article_noun",
+        vi: ["pronoun", "verb", "article", "noun"],
+        en: ["pronoun", "verb", "article", "noun"],
+        zh: ["pronoun", "verb", "noun"]
+    },
+    {
+        id: "cau_don_noun",
+        vi: ["pronoun", "verb", "noun"],
+        en: ["pronoun", "verb", "noun"],
+        zh: ["pronoun", "verb", "noun"]
+    },
+        {
+        id: "cau_don_pronoun",
+        vi: ["pronoun1", "verb", "pronoun2"],
+        en: ["pronoun1", "verb", "pronoun2"],
+        zh: ["pronoun1", "verb", "pronoun2"]
+    }
+];
+
+function tokenize(text, lang) {
+    if (langsNoSpace.includes(lang)) {
+        // Xử lý ngôn ngữ không có khoảng trắng như tiếng Trung
+        let tokens = [];
+        let s = text.replace(/\s+/g, "");
+        let i = 0;
+        while (i < s.length) {
+            let found = "";
+            for (let len = Math.min(4, s.length - i); len > 0; len--) {
+                let sub = s.substr(i, len);
+                let dictEntry = dictionary.find(w => w[lang] && w[lang] === sub);
+                if (dictEntry) {
+                    found = sub;
+                    break;
+                }
+            }
+            if (found) {
+                tokens.push(found);
+                i += found.length;
+            } else {
+                tokens.push(s[i]);
+                i++;
+            }
+        }
+        return tokens;
+    }
+
+    // Xử lý ngôn ngữ có khoảng trắng
+    // Xử lý ngôn ngữ có khoảng trắng
+    const words = text.trim().toLowerCase().split(/\s+/);
+    let tokens = [];
+    let i = 0;
+    
+    while (i < words.length) {
+        let maxPhrase = null;
+        let maxLen = 0;
+        
+        // Tìm cụm từ dài nhất trong từ điển
+        for (let len = Math.min(3, words.length - i); len > 0; len--) {
+            const phrase = words.slice(i, i + len).join(" ");
+            for (let entry of dictionary) {
+                const dictValues = Array.isArray(entry[lang]) ? entry[lang] : [entry[lang]];
+                if (dictValues.some(v => v.toLowerCase() === phrase)) {
+                    if (len > maxLen) {
+                        maxLen = len;
+                        maxPhrase = phrase;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (maxPhrase) {
+            tokens.push(maxPhrase);
+            i += maxLen;
+        } else {
+            tokens.push(words[i]);
+            i++;
+        }
+    }
+    
+    return tokens;
+}
+
+
+function findDictEntries(word, lang) {
+    let result = [];
+    for (let w of dictionary) {
+        if (!w[lang]) continue;
+        
+        // Xử lý từ điển dạng mảng
+        if (Array.isArray(w[lang])) {
+            for (let v of w[lang]) {
+                if (v.toLowerCase() === word.toLowerCase()) {
+                    let o = {};
+                    // Copy tất cả thuộc tính
+                    for (let k in w) {
+                        // Giữ nguyên mảng các từ đồng nghĩa ở ngôn ngữ đích
+                        if (k !== lang) {
+                            o[k] = w[k];
+                        } else {
+                            o[k] = v;
+                        }
+                    }
+                    result.push(o);
+                }
+            }
+        } else {
+            if (w[lang].toLowerCase() === word.toLowerCase()) {
+                result.push({...w});
+            }
+        }
+    }
+    return result;
+}
+
+function analyzeTokensAll(tokens, lang, toLang) {
+    return tokens.map(tok => {
+        const entries = findDictEntries(tok, lang);
+        if (entries.length)
+            return entries;
+        return [{ id: null, pos: null, [lang]: tok, [toLang]: `<span style='color:#c62828'>${tok}</span>` }];
+    });
+}
+
+function getBestPattern(tokens, lang) {
+    let best = null, bestScore = -1, bestId = null;
+    for (const g of grammars) {
+        let pattern = g[lang];
+        if (pattern.length !== tokens.length) continue;
+        let score = 0;
+        for (let i = 0; i < pattern.length; ++i) {
+            let pat = pattern[i];
+            let pos = tokens[i][0].pos;
+            let patBase = pat.replace(/\d+$/, "");
+            if (pos === patBase) score++;
+        }
+        if (score > bestScore) {
+            bestScore = score;
+            best = g;
+            bestId = g.id;
+        }
+    }
+    return best || {vi: tokens.map((arr,i)=>arr[0].pos), en: tokens.map((arr,i)=>arr[0].pos), id: null};
+}
+
+function cartesianProduct(arrays) {
+    // Tách các từ đồng nghĩa thành mảng riêng
+    const expandedArrays = arrays.map(entries => {
+        return entries.map(entry => {
+            let result = [];
+            // Kiểm tra tất cả ngôn ngữ có trong từ điển
+            for (let lang in entry) {
+                if (Array.isArray(entry[lang])) {
+                    // Nếu có mảng từ đồng nghĩa, tạo bản sao cho mỗi nghĩa
+                    entry[lang].forEach(synonym => {
+                        result.push({...entry, [lang]: synonym});
+                    });
+                    return result; // Return ngay khi tìm thấy mảng đồng nghĩa
+                }
+            }
+            // Nếu không có từ đồng nghĩa, giữ nguyên entry
+            result.push(entry);
+            return result;
+        }).flat();
+    });
+
+    // Tính tích Descartes của các mảng
+    return expandedArrays.reduce((a, b) => 
+        a.flatMap(d => b.map(e => d.concat([e]))), 
+        [[]]
+    );
+}
+
+function partialTranslateAll(input, fromLang, toLang) {
+    const tokens = tokenize(input, fromLang);
+    if (tokens.length === 0) return {sentences: [], full: true, grammar: null};
+    const analyzed = analyzeTokensAll(tokens, fromLang, toLang);
+
+    const bestPat = getBestPattern(analyzed, fromLang);
+    const fromPat = bestPat[fromLang];
+    const toPat = bestPat[toLang];
+    const grammarId = bestPat.id;
+
+
+    let label2idx = {};
+    let counter = {};
+    for (let i = 0; i < fromPat.length; ++i) {
+        let pat = fromPat[i];
+        let base = pat.replace(/\d+$/, "");
+        counter[base] = (counter[base] || 0) + 1;
+        let label = base + counter[base];
+        label2idx[label] = i;
+        if (!/\d+$/.test(pat)) {
+            label2idx[base] = i;
+        }
+    }
+
+    const combos = cartesianProduct(analyzed);
+    let joinChar = langsNoSpace.includes(toLang) ? "" : " ";
+
+const allSentences = combos.map(words => {
+        return toPat.map(label => {
+            let idx = label2idx[label];
+            return (idx !== undefined && words[idx]) ? words[idx][toLang] : "";
+        }).join(joinChar);
+    });
+
+    // Loại bỏ câu trùng lặp và sắp xếp
+    return {
+        sentences: Array.from(new Set(allSentences)).sort(),
+        full: true,
+        grammar: bestPat
+    };
+}
+
+// UI & xử lý
+let mainResultIdx = 0;
+let lastSentences = [];
+let lastInput = "";
+let lastFrom = "";
+let lastTo = "";
+let lastGrammar = null;
+
+function grammarPatternToString(patArr) {
+    if (!patArr) return '';
+    return patArr.map(x => `<span style="font-family:monospace">${x}</span>`).join(' – ');
+}
+
+function updateOutput(mainIdx) {
+    const from = fromLang.value;
+    const to = toLang.value;
+    const text = inputText.value.trim();
+    if (!text) {
+        outputText.innerHTML = '';
+        outputText.style.color = '';
+        grammarInfo.style.display = "none";
+        return;
+    }
+    if (text !== lastInput || from !== lastFrom || to !== lastTo) mainResultIdx = 0;
+    lastInput = text;
+    lastFrom = from;
+    lastTo = to;
+    
+    // Phân tích tokens và pattern trước
+    const userTokens = tokenize(text, from);
+    const analyzed = analyzeTokensAll(userTokens, from, to);
+    const result = partialTranslateAll(text, from, to);
+    lastSentences = result.sentences;
+    lastGrammar = result.grammar;
+
+    // ĐOẠN BỔ SUNG PHÁT HIỆN TỪ BỊ BỎ QUA
+    let warning = "";
+    if (lastGrammar && lastGrammar[from]) {
+        const pattern = lastGrammar[from];
+        let unusedTokens = [];
+        
+        // Kiểm tra từng token có khớp với pattern không
+        userTokens.forEach((token, idx) => {
+            const entries = findDictEntries(token, from);
+            if (entries.length) {
+                // Kiểm tra xem pos của token có khớp với pattern tại vị trí đó không
+                const tokenPos = entries[0].pos;
+                const patternPos = pattern[idx]?.replace(/\d+$/, "");
+                if (!patternPos || tokenPos !== patternPos) {
+                    unusedTokens.push(token);
+                }
+            } else {
+                // Token không có trong từ điển
+                unusedTokens.push(token);
+            }
+        });
+
+        if (unusedTokens.length) {
+            warning = `<div style="color:#c62828;font-size:13px;margin:4px 0;">
+                ⚠️ Từ không được dịch hoặc không khớp ngữ pháp: ${unusedTokens.map(x => `"${x}"`).join(", ")}
+            </div>`;
+        }
+    }
+
+    // Hiển thị thông tin ngữ pháp
+    if (lastGrammar && lastGrammar.id) {
+        grammarInfo.innerHTML = `Ngữ pháp đang sử dụng: <b>${lastGrammar.id}</b><br>
+            <span style="color:#1976d2">(${fromLang.options[fromLang.selectedIndex].text}):</span> ${grammarPatternToString(lastGrammar[from])}<br>
+            <span style="color:#1976d2">(${toLang.options[toLang.selectedIndex].text}):</span> ${grammarPatternToString(lastGrammar[to])}`;
+        grammarInfo.style.display = "";
+    } else {
+        grammarInfo.innerHTML = "";
+        grammarInfo.style.display = "none";
+    }
+
+    // Hiển thị kết quả và warning
+    if (!result.sentences.length) {
+        outputText.innerHTML = warning + '<span style="color:#c62828">[Không có kết quả]</span>';
+        return;
+    }
+
+    if (mainResultIdx < 0 || mainResultIdx >= result.sentences.length) mainResultIdx = 0;
+    let html = warning; // Thêm warning vào đầu
+    result.sentences.forEach((s, idx) => {
+        if (idx === mainResultIdx) {
+            html += `<div style="background:#bbdefb; padding:6px; border-radius:4px; margin-bottom:6px;">
+                <b>${s}</b> 
+                <button class="reverse-btn" onclick="chooseMainResult(${idx});reverseTranslate();">Đảo ngược dịch</button>
+            </div>`;
+        } else {
+            html += `<div style="color:#555; padding:4px; margin-bottom:4px; cursor:pointer;" onclick="chooseMainResult(${idx});">${s}</div>`;
+        }
+    });
+    outputText.innerHTML = html;
+    outputText.style.color = result.full ? "" : "#c62828";
+}
+
+function doTranslate() { updateOutput(mainResultIdx); }
+window.chooseMainResult = function(idx) {
+    mainResultIdx = idx;
+    updateOutput(idx);
+};
+window.reverseTranslate = function() {
+    const from = fromLang.value;
+    const to = toLang.value;
+    const mainText = lastSentences[mainResultIdx];
+    fromLang.value = to;
+    toLang.value = from;
+    inputText.value = mainText;
+    mainResultIdx = 0;
+    doTranslate();
+};
+const fromLang = document.getElementById('fromLang');
+const toLang = document.getElementById('toLang');
+const inputText = document.getElementById('inputText');
+const outputText = document.getElementById('outputText');
+const swapBtn = document.getElementById('swapBtn');
+const grammarInfo = document.getElementById('grammarInfo');
+swapBtn.addEventListener('click', () => {
+    const temp = fromLang.value;
+    fromLang.value = toLang.value;
+    toLang.value = temp;
+    inputText.value = outputText.innerText.trim();
+    mainResultIdx = 0;
+    doTranslate();
+});
+
+inputText.addEventListener('input', function() { mainResultIdx = 0; doTranslate(); });
+fromLang.addEventListener('change', function() { mainResultIdx = 0; doTranslate(); });
+toLang.addEventListener('change', function() { mainResultIdx = 0; doTranslate(); });
+doTranslate();
+</script>
+</body>
+</html>

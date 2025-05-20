@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Dịch Offline (Đa nghĩa - có chọn kết quả chính)</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        .container {
+            background: #fff;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 24px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; color: #1976d2; }
+        .controls { display: flex; gap: 10px; margin-bottom: 14px; }
+        select { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+        .swap-btn {
+            background: #edf2fb; border: none; border-radius: 50%; width: 36px; height: 36px;
+            cursor: pointer; font-size: 18px; margin-top: 2px;
+        }
+        textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 12px; min-height: 80px;}
+        .partial-translate { color: #c62828 !important; font-weight: bold;}
+        .result-sentence { margin-bottom: 6px; }
+        .main-result { background: #e3f2fd; font-weight: bold; padding: 6px 6px; border-radius: 4px; margin-bottom: 8px; }
+        .subs { color: #555; margin-top: 10px; }
+        .choose-btn { cursor:pointer; color: #1976d2; text-decoration: underline; background: none; border: none; padding: 0 3px;}
+        .choose-btn:focus { outline: 1px dashed #1976d2; }
+        .reverse-btn { margin-left: 12px; font-size: 13px; color: #555; cursor:pointer; text-decoration: underline; background: none; border: none;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Dịch Offline (Chọn kết quả chính, đảo ngược dịch)</h2>
+        <div class="controls">
+            <select id="fromLang">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">Tiếng Anh</option>
+                <option value="zh">Tiếng Trung</option>
+            </select>
+            <button class="swap-btn" id="swapBtn" title="Đổi chiều">⇄</button>
+            <select id="toLang">
+                <option value="en">Tiếng Anh</option>
+                <option value="vi">Tiếng Việt</option>
+                <option value="zh">Tiếng Trung</option>
+            </select>
+        </div>
+        <textarea id="inputText" placeholder="Nhập văn bản..."></textarea>
+        <div id="outputText" style="white-space:pre-line;background:#f8f9fa;min-height:80px;padding:10px;border-radius:5px;border:1px solid #ccc;margin-bottom:12px;"></div>
+        <div style="font-size:13px;color:#888;text-align:center;margin-top:12px;">
+            <b>Lưu ý:</b> Nếu dịch chưa hoàn chỉnh sẽ hiện màu đỏ. Nếu có nhiều nghĩa sẽ hiện nhiều câu, bạn có thể chọn câu chính để đảo ngược dịch.
+        </div>
+    </div>
+    <script>
+    // Ngôn ngữ không dùng dấu cách giữa các từ
+    const langsNoSpace = ["zh"];
+
+    // Từ điển mở rộng: "xanh" có thể là blue hoặc green
+    const dictionary = [
+        // Đại từ
+        { id: "i",      pos: "pronoun", class: "personal", vi: "tôi", en: "I", zh: "我" },
+        { id: "you",    pos: "pronoun", class: "personal", vi: "bạn", en: "you", zh: "你" },
+        // Động từ
+        { id: "love",   pos: "verb",    class: "action",   vi: "yêu", en: "love", zh: "爱" },
+        // Mạo từ
+        { id: "the",    pos: "article", class: "article",  vi: "con", en: "the", zh: "" },
+        // Danh từ
+        { id: "cat",    pos: "noun",    class: "animal",   vi: "mèo", en: "cat", zh: "猫" },
+        // Tính từ
+        { id: "fat",    pos: "adj",     class: "shape",    vi: "béo", en: "fat", zh: "胖" },
+        { id: "blue",   pos: "adj",     class: "color",    vi: "xanh", en: "blue",  zh: "蓝色" },
+        { id: "green",  pos: "adj",     class: "color",    vi: "xanh", en: "green", zh: "绿色" },
+        // Tính từ chỉ màu (cụm từ tiếng Việt)
+        { id: "color",  pos: "adj",     class: "color",    vi: "màu", en: "", zh: "" },
+
+        // Các từ khác
+        { id: "book",   pos: "noun",    class: "object",   vi: "sách", en: "book", zh: "书" },
+        { id: "hello",  pos: "interj",  class: "greeting", vi: "xin chào", en: "hello", zh: "你好" }
+    ];
+
+    // Pattern ngữ pháp cho từng ngôn ngữ
+    const mainGrammar = {
+        vi: ["pronoun", "verb", "article", "noun", "adj", "adj", "adj"],
+        en: ["pronoun", "verb", "article", "adj", "adj", "adj", "noun"],
+        zh: ["pronoun", "verb", "article", "adj", "adj", "adj", "noun"]
+    };
+
+    function tokenize(text, lang) {
+        if (langsNoSpace.includes(lang)) {
+            let tokens = [];
+            let s = text.replace(/\s+/g, "");
+            let i = 0;
+            while (i < s.length) {
+                let found = "";
+                for (let len = Math.min(4, s.length - i); len > 0; len--) {
+                    let sub = s.substr(i, len);
+                    let dictEntry = dictionary.find(w => w[lang] && w[lang] === sub);
+                    if (dictEntry) {
+                        found = sub;
+                        break;
+                    }
+                }
+                if (found) {
+                    tokens.push(found);
+                    i += found.length;
+                } else {
+                    tokens.push(s[i]);
+                    i++;
+                }
+            }
+            return tokens;
+        }
+        return text.trim().toLowerCase().split(/\s+/);
+    }
+
+    // Phân tích: trả về mảng các lựa chọn từ điển cho mỗi token
+    function analyzeTokensAll(tokens, lang, toLang) {
+        return tokens.map(tok => {
+            // Tìm tất cả entry có từ gốc, cùng pos (nếu nhập nhiều lần cũng lấy nhiều)
+            const entries = dictionary.filter(w => w[lang] && w[lang].toLowerCase() === tok.toLowerCase());
+            if (entries.length)
+                return entries;
+            // Nếu không khớp, vẫn trả về 1 bản ghi... để báo đỏ
+            return [{ id: null, pos: null, [lang]: tok, [toLang]: `<span style='color:#c62828'>${tok}</span>` }];
+        });
+    }
+
+    // Ghép mapping theo pattern ngữ pháp: cho phép bỏ qua từ loại, mapping nhiều token cùng loại (adj)
+    // Trả về mảng: với từng vị trí pattern, là mảng các lựa chọn {id,...}
+    function loosePatternMatchAll(analyzed, pattern) {
+        // Nhóm từng loại từ của câu theo pattern
+        let mapping = [];
+        let used = Array(analyzed.length).fill(false);
+        for (let i = 0; i < pattern.length; ++i) {
+            let currentChoices = [];
+            for (let j = 0; j < analyzed.length; ++j) {
+                if (!used[j] && analyzed[j][0].pos === pattern[i]) {
+                    // Lấy all lựa chọn cho token này
+                    currentChoices.push(...analyzed[j]);
+                    used[j] = true;
+                    break; // chỉ ghép 1 token cho mỗi loại từ pattern
+                }
+            }
+            mapping.push(currentChoices); // mảng các lựa chọn (có thể nhiều bản ghi xanh)
+        }
+        // Nếu còn token chưa dùng (không tra được hoặc không khớp pattern), báo lỗi
+        if (used.some(u => !u)) return null;
+        return mapping;
+    }
+
+    // Sinh tất cả hoán vị các lựa chọn từ mapping (mỗi phần tử là mảng lựa chọn)
+    function cartesianProduct(arrays) {
+        return arrays.reduce((a, b) => a.flatMap(d => b.map(e => d.concat([e]))), [[]]);
+    }
+
+    // Lưu id của câu đang là chính, mặc định là 0
+    let mainResultIdx = 0;
+    let lastSentences = [];
+    let lastInput = "";
+    let lastFrom = "";
+    let lastTo = "";
+
+    function partialTranslateAll(input, fromLang, toLang) {
+        const tokens = tokenize(input, fromLang);
+        if (tokens.length === 0) return {sentences: [], full: true};
+
+        const analyzed = analyzeTokensAll(tokens, fromLang, toLang);
+        const pattern = mainGrammar[toLang];
+        const mapping = loosePatternMatchAll(analyzed, pattern);
+
+        if (!mapping) return {sentences: ['[Không nhận diện được ngữ pháp phù hợp]'], full: false};
+
+        let joinChar = langsNoSpace.includes(toLang) ? "" : " ";
+        let mappingFixed = mapping.map(arr => arr.length ? arr : [{[toLang]:""}]);
+        let allSentences = cartesianProduct(mappingFixed).map(words =>
+            words.map(w => w[toLang]).join(joinChar)
+        );
+        allSentences = Array.from(new Set(allSentences));
+        return {sentences: allSentences, full: true};
+    }
+
+    function updateOutput(mainIdx) {
+        const from = fromLang.value;
+        const to = toLang.value;
+        const text = inputText.value.trim();
+        if (!text) {
+            outputText.innerHTML = '';
+            outputText.style.color = '';
+            return;
+        }
+        // Nếu đầu vào hoặc ngôn ngữ đổi, reset chọn chính
+        if (text !== lastInput || from !== lastFrom || to !== lastTo) {
+            mainResultIdx = 0;
+        }
+        lastInput = text;
+        lastFrom = from;
+        lastTo = to;
+
+        const result = partialTranslateAll(text, from, to);
+        lastSentences = result.sentences;
+
+        // Nếu không có câu nào thì báo lỗi
+        if (!result.sentences.length) {
+            outputText.innerHTML = '<span style="color:#c62828">[Không có kết quả]</span>';
+            return;
+        }
+
+        // Đảm bảo mainResultIdx hợp lệ
+        if (mainResultIdx < 0 || mainResultIdx >= result.sentences.length) mainResultIdx = 0;
+
+        // Hiện câu chính nổi bật, phụ ở dưới.
+        let html = `<div class="main-result">${result.sentences[mainResultIdx]}
+            <button class="reverse-btn" onclick="reverseTranslate()">Đảo ngược dịch</button>
+        </div>`;
+        if (result.sentences.length > 1) {
+            html += `<div class="subs">Các cách khác: `;
+            result.sentences.forEach((s, idx) => {
+                if (idx !== mainResultIdx)
+                    html += `<button class="choose-btn" onclick="chooseMainResult(${idx})">${s}</button> `;
+            });
+            html += `</div>`;
+        }
+        outputText.innerHTML = html;
+        outputText.style.color = result.full ? "" : "#c62828";
+    }
+
+    function doTranslate() {
+        updateOutput(mainResultIdx);
+    }
+
+    // Chọn câu chính khác
+    window.chooseMainResult = function(idx) {
+        mainResultIdx = idx;
+        updateOutput(idx);
+    };
+
+    // Đảo ngược dịch từ câu chính
+    window.reverseTranslate = function() {
+        // Lấy câu chính hiện tại, đảo ngôn ngữ và dịch lại
+        const from = fromLang.value;
+        const to = toLang.value;
+        const mainText = lastSentences[mainResultIdx];
+        // Đổi chiều dịch
+        fromLang.value = to;
+        toLang.value = from;
+        inputText.value = mainText;
+        mainResultIdx = 0;
+        doTranslate();
+    };
+
+    // DOM event
+    const fromLang = document.getElementById('fromLang');
+    const toLang = document.getElementById('toLang');
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const swapBtn = document.getElementById('swapBtn');
+
+    swapBtn.addEventListener('click', () => {
+        const temp = fromLang.value;
+        fromLang.value = toLang.value;
+        toLang.value = temp;
+        const tempText = inputText.value;
+        inputText.value = outputText.innerText;
+        outputText.innerText = tempText;
+        mainResultIdx = 0;
+        doTranslate();
+    });
+
+    inputText.addEventListener('input', function() { mainResultIdx = 0; doTranslate(); });
+    fromLang.addEventListener('change', function() { mainResultIdx = 0; doTranslate(); });
+    toLang.addEventListener('change', function() { mainResultIdx = 0; doTranslate(); });
+
+    // Khởi động lần đầu
+    doTranslate();
+    </script>
+</body>
+</html>
